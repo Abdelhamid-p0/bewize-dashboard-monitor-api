@@ -1,5 +1,6 @@
 package com.bewize.monitorbackend.controller;
 
+import com.bewize.monitorbackend.dto.PageResponse;
 import com.bewize.monitorbackend.dto.subscription.SubscriptionCreateRequest;
 import com.bewize.monitorbackend.dto.subscription.SubscriptionListDto;
 import com.bewize.monitorbackend.dto.subscription.SubscriptionUpdateRequest;
@@ -9,9 +10,11 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import org.springframework.data.web.PageableHandlerMethodArgumentResolver;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -34,7 +37,9 @@ class SubscriptionControllerTest {
     void setup() {
         MockitoAnnotations.openMocks(this);
         SubscriptionController controller = new SubscriptionController(subscriptionService);
-        mockMvc = MockMvcBuilders.standaloneSetup(controller).build();
+        mockMvc = MockMvcBuilders.standaloneSetup(controller)
+                .setCustomArgumentResolvers(new PageableHandlerMethodArgumentResolver())
+                .build();
     }
 
     private SubscriptionListDto subDto(String id, String orderId) {
@@ -48,20 +53,22 @@ class SubscriptionControllerTest {
     }
 
     @Test
-    @DisplayName("GET /subscriptions returns list")
+    @DisplayName("GET /subscriptions returns paged list")
     void getSubscriptions_ok() throws Exception {
-        List<SubscriptionListDto> payload = List.of(
-                subDto("sub-1", "ord-1"),
-                subDto("sub-2", null)
-        );
-        when(subscriptionService.getSubscriptions()).thenReturn(payload);
+        SubscriptionListDto d1 = subDto("sub-1", "ord-1");
+        SubscriptionListDto d2 = subDto("sub-2", null);
+        PageResponse.Meta meta = new PageResponse.Meta(0, 20, 2, 1);
+        PageResponse<SubscriptionListDto> page = new PageResponse<>(List.of(d1, d2), meta);
+        when(subscriptionService.getSubscriptions(any())).thenReturn(page);
 
         mockMvc.perform(get("/subscriptions"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$", hasSize(2)))
-                .andExpect(jsonPath("$[0].id", is("sub-1")))
-                .andExpect(jsonPath("$[0].orderId", is("ord-1")))
-                .andExpect(jsonPath("$[1].id", is("sub-2")));
+                .andExpect(jsonPath("$.data", hasSize(2)))
+                .andExpect(jsonPath("$.data[0].id", is("sub-1")))
+                .andExpect(jsonPath("$.data[0].orderId", is("ord-1")))
+                .andExpect(jsonPath("$.data[1].id", is("sub-2")))
+                .andExpect(jsonPath("$.meta.totalElements", is(2)))
+                .andExpect(jsonPath("$.meta.totalPages", is(1)));
     }
 
     @Test

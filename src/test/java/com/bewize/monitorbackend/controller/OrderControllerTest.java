@@ -14,6 +14,8 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import com.bewize.monitorbackend.dto.PageResponse;
+import org.springframework.data.web.PageableHandlerMethodArgumentResolver;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -34,7 +36,9 @@ class OrderControllerTest {
     void setup() {
         MockitoAnnotations.openMocks(this);
         OrderController controller = new OrderController(orderService);
-        mockMvc = MockMvcBuilders.standaloneSetup(controller).build();
+        mockMvc = MockMvcBuilders.standaloneSetup(controller)
+                .setCustomArgumentResolvers(new PageableHandlerMethodArgumentResolver())
+                .build();
     }
 
     private OrderListDto order(String id, String code, String studentId, String discountId) {
@@ -52,27 +56,32 @@ class OrderControllerTest {
         o.setStudent(s);
         DiscountDto d = new DiscountDto();
         d.setId(discountId);
-        d.setPercentage(10);
+        d.setPercentage(10F);
         o.setDiscount(d);
         return o;
     }
 
     @Test
-    @DisplayName("GET /orders returns list")
+    @DisplayName("GET /orders returns paged list")
     void getOrders_ok() throws Exception {
-        List<OrderListDto> payload = List.of(
+        List<OrderListDto> data = List.of(
                 order("ord-1", "O-001", "stu-1", "disc-1"),
                 order("ord-2", "O-002", "stu-2", "disc-2")
         );
-        when(orderService.getOrders()).thenReturn(payload);
+        PageResponse.Meta meta = new PageResponse.Meta(0, 2, 2, 1);
+        PageResponse<OrderListDto> page = new PageResponse<>(data, meta);
+        when(orderService.getOrders(any())).thenReturn(page);
 
         mockMvc.perform(get("/orders"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$", hasSize(2)))
-                .andExpect(jsonPath("$[0].id", is("ord-1")))
-                .andExpect(jsonPath("$[0].code", is("O-001")))
-                .andExpect(jsonPath("$[0].student.id", is("stu-1")))
-                .andExpect(jsonPath("$[0].discount.id", is("disc-1")))
-                .andExpect(jsonPath("$[1].id", is("ord-2")));
+                .andExpect(jsonPath("$.data", hasSize(2)))
+                .andExpect(jsonPath("$.data[0].id", is("ord-1")))
+                .andExpect(jsonPath("$.data[0].code", is("O-001")))
+                .andExpect(jsonPath("$.data[0].student.id", is("stu-1")))
+                .andExpect(jsonPath("$.data[0].discount.id", is("disc-1")))
+                .andExpect(jsonPath("$.meta.page", is(0)))
+                .andExpect(jsonPath("$.meta.size", is(2)))
+                .andExpect(jsonPath("$.meta.totalElements", is(2)))
+                .andExpect(jsonPath("$.meta.totalPages", is(1)));
     }
 }

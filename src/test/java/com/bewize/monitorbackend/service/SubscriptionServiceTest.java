@@ -2,18 +2,24 @@ package com.bewize.monitorbackend.service;
 
 import com.bewize.monitorbackend.domains.subscription.Order;
 import com.bewize.monitorbackend.domains.subscription.Subscription;
+import com.bewize.monitorbackend.dto.PageResponse;
 import com.bewize.monitorbackend.dto.subscription.SubscriptionCreateRequest;
 import com.bewize.monitorbackend.dto.subscription.SubscriptionListDto;
 import com.bewize.monitorbackend.dto.subscription.SubscriptionUpdateRequest;
 import com.bewize.monitorbackend.mappers.SubscriptionMapper;
 import com.bewize.monitorbackend.repository.OrderRepository;
 import com.bewize.monitorbackend.repository.SubscriptionRepository;
+import com.bewize.monitorbackend.repository.projection.SubscriptionListProjection;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -55,19 +61,39 @@ class SubscriptionServiceTest {
     }
 
     @Test
-    @DisplayName("getSubscriptions returns mapped list")
-    void getSubscriptions_ok() {
-        Subscription s1 = Subscription.builder().id("sub-1").startDate(LocalDateTime.now()).endDate(LocalDateTime.now().plusDays(5)).build();
-        Subscription s2 = Subscription.builder().id("sub-2").startDate(LocalDateTime.now()).endDate(LocalDateTime.now().plusDays(10)).build();
-        when(subscriptionRepository.findAll()).thenReturn(List.of(s1, s2));
-        stubToListDto();
+    @DisplayName("getSubscriptions returns mapped page response")
+    void getSubscriptions_paged_ok() {
+        Pageable pageable = PageRequest.of(0, 2);
 
-        List<SubscriptionListDto> result = subscriptionService.getSubscriptions();
+        SubscriptionListProjection p1 = new SubscriptionListProjection() {
+            public String getId() { return "sub-1"; }
+            public java.time.LocalDateTime getStartDate() { return java.time.LocalDateTime.parse("2024-01-01T00:00:00"); }
+            public java.time.LocalDateTime getEndDate() { return java.time.LocalDateTime.parse("2024-02-01T00:00:00"); }
+            public OrderProjection getOrder() { return null; }
+        };
+        SubscriptionListProjection p2 = new SubscriptionListProjection() {
+            public String getId() { return "sub-2"; }
+            public java.time.LocalDateTime getStartDate() { return java.time.LocalDateTime.parse("2024-03-01T00:00:00"); }
+            public java.time.LocalDateTime getEndDate() { return java.time.LocalDateTime.parse("2024-04-01T00:00:00"); }
+            public OrderProjection getOrder() { return new OrderProjection() { public String getId() { return "ord-9"; } }; }
+        };
+        Page<SubscriptionListProjection> page = new PageImpl<>(java.util.List.of(p1, p2), pageable, 2);
+        when(subscriptionRepository.findAllProjectedBy(pageable)).thenReturn(page);
 
-        assertThat(result).hasSize(2);
-        assertThat(result).extracting(SubscriptionListDto::getId).containsExactlyInAnyOrder("sub-1", "sub-2");
-        verify(subscriptionRepository).findAll();
-        verify(subscriptionMapper, times(2)).toListDto(any(Subscription.class));
+        PageResponse<SubscriptionListDto> resp = subscriptionService.getSubscriptions(pageable);
+
+        assertThat(resp.getData()).hasSize(2);
+        assertThat(resp.getData()).extracting(SubscriptionListDto::getId).containsExactlyInAnyOrder("sub-1", "sub-2");
+        assertThat(resp.getMeta().getPage()).isEqualTo(0);
+        assertThat(resp.getMeta().getSize()).isEqualTo(2);
+        assertThat(resp.getMeta().getTotalElements()).isEqualTo(2);
+        assertThat(resp.getMeta().getTotalPages()).isEqualTo(1);
+
+        // order id only on second
+        SubscriptionListDto second = resp.getData().stream().filter(d -> d.getId().equals("sub-2")).findFirst().orElseThrow();
+        assertThat(second.getOrderId()).isEqualTo("ord-9");
+
+        verify(subscriptionRepository).findAllProjectedBy(pageable);
     }
 
     @Test

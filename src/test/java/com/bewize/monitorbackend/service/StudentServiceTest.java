@@ -2,6 +2,7 @@ package com.bewize.monitorbackend.service;
 
 import com.bewize.monitorbackend.domains.subscription.Order;
 import com.bewize.monitorbackend.domains.user.Student;
+import com.bewize.monitorbackend.dto.PageResponse;
 import com.bewize.monitorbackend.dto.order.OrderDto;
 import com.bewize.monitorbackend.dto.student.StudentDetailsDto;
 import com.bewize.monitorbackend.dto.student.StudentListDto;
@@ -9,13 +10,17 @@ import com.bewize.monitorbackend.mappers.OrderMapper;
 import com.bewize.monitorbackend.mappers.StudentMapper;
 import com.bewize.monitorbackend.repository.OrderRepository;
 import com.bewize.monitorbackend.repository.StudentRepository;
+import com.bewize.monitorbackend.repository.projection.StudentListProjection;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 import java.util.Optional;
@@ -46,27 +51,46 @@ class StudentServiceTest {
     }
 
     @Test
-    @DisplayName("getStudents returns mapped list")
-    void getStudents_ok() {
-        Student s1 = new Student(); s1.setId("s1");
-        Student s2 = new Student(); s2.setId("s2");
-        when(studentRepository.findAll()).thenReturn(List.of(s1, s2));
+    @DisplayName("getStudents returns mapped page response")
+    void getStudents_paged_ok() {
+        Pageable pageable = PageRequest.of(0, 2);
 
-        when(studentMapper.toStudentListDto(any(Student.class))).thenAnswer(inv -> {
-            Student src = inv.getArgument(0);
-            StudentListDto dto = new StudentListDto();
-            dto.setId(src.getId());
-            return dto;
-        });
+        // create simple projection implementations
+        StudentListProjection p1 = new StudentListProjection() {
+            public String getId() { return "s1"; }
+            public String getCne() { return "cne1"; }
+            public String getFirstName() { return "Ana"; }
+            public String getLastName() { return "Lee"; }
+            public String getEmail() { return "ana@example.com"; }
+            public String getPhone() { return "111"; }
+            public com.bewize.monitorbackend.enums.Gender getGender() { return null; }
+            public java.sql.Date getsingupDate() { return null; }
+            public StudentListProjection.LevelProjection getLevel() { return null; }
+        };
+        StudentListProjection p2 = new StudentListProjection() {
+            public String getId() { return "s2"; }
+            public String getCne() { return "cne2"; }
+            public String getFirstName() { return "Bob"; }
+            public String getLastName() { return "Ray"; }
+            public String getEmail() { return "bob@example.com"; }
+            public String getPhone() { return "222"; }
+            public com.bewize.monitorbackend.enums.Gender getGender() { return null; }
+            public java.sql.Date getsingupDate() { return null; }
+            public StudentListProjection.LevelProjection getLevel() { return null; }
+        };
+        Page<StudentListProjection> page = new PageImpl<>(java.util.List.of(p1, p2), pageable, 2);
+        when(studentRepository.findAllProjectedBy(pageable)).thenReturn(page);
 
-        List<StudentListDto> result = studentService.getStudents();
+        PageResponse<StudentListDto> response = studentService.getStudents(pageable);
 
-        assertThat(result).hasSize(2);
-        assertThat(result).extracting(StudentListDto::getId)
-                .containsExactlyInAnyOrder("s1", "s2");
+        assertThat(response.getData()).hasSize(2);
+        assertThat(response.getData()).extracting(StudentListDto::getId).containsExactlyInAnyOrder("s1", "s2");
+        assertThat(response.getMeta().getPage()).isEqualTo(0);
+        assertThat(response.getMeta().getSize()).isEqualTo(2);
+        assertThat(response.getMeta().getTotalElements()).isEqualTo(2);
+        assertThat(response.getMeta().getTotalPages()).isEqualTo(1);
 
-        verify(studentRepository, times(1)).findAll();
-        verify(studentMapper, times(2)).toStudentListDto(any(Student.class));
+        verify(studentRepository).findAllProjectedBy(pageable);
     }
 
     @Test

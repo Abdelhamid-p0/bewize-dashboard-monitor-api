@@ -1,5 +1,6 @@
 package com.bewize.monitorbackend.controller;
 
+import com.bewize.monitorbackend.dto.PageResponse;
 import com.bewize.monitorbackend.dto.student.StudentDetailsDto;
 import com.bewize.monitorbackend.dto.student.StudentListDto;
 import com.bewize.monitorbackend.service.StudentService;
@@ -8,6 +9,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.springframework.data.web.PageableHandlerMethodArgumentResolver;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
@@ -29,11 +31,13 @@ class StudentControllerTest {
     void setup() {
         MockitoAnnotations.openMocks(this);
         StudentController controller = new StudentController(studentService);
-        mockMvc = MockMvcBuilders.standaloneSetup(controller).build();
+        mockMvc = MockMvcBuilders.standaloneSetup(controller)
+                .setCustomArgumentResolvers(new PageableHandlerMethodArgumentResolver())
+                .build();
     }
 
     @Test
-    @DisplayName("GET /students returns list")
+    @DisplayName("GET /students returns paged list")
     void getStudents_ok() throws Exception {
         StudentListDto s1 = new StudentListDto();
         s1.setId("stu-1");
@@ -45,14 +49,21 @@ class StudentControllerTest {
         s2.setId("stu-2");
         s2.setFirstName("Bob");
 
-        when(studentService.getStudents()).thenReturn(List.of(s1, s2));
+        PageResponse.Meta meta = new PageResponse.Meta(0, 2, 2, 1);
+        PageResponse<StudentListDto> page = new PageResponse<>(List.of(s1, s2), meta);
+
+        when(studentService.getStudents(any())).thenReturn(page);
 
         mockMvc.perform(get("/students"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$", hasSize(2)))
-                .andExpect(jsonPath("$[0].id", is("stu-1")))
-                .andExpect(jsonPath("$[0].firstName", is("Ana")))
-                .andExpect(jsonPath("$[1].id", is("stu-2")));
+                .andExpect(jsonPath("$.data", hasSize(2)))
+                .andExpect(jsonPath("$.data[0].id", is("stu-1")))
+                .andExpect(jsonPath("$.data[0].firstName", is("Ana")))
+                .andExpect(jsonPath("$.data[1].id", is("stu-2")))
+                .andExpect(jsonPath("$.meta.page", is(0)))
+                .andExpect(jsonPath("$.meta.size", is(2)))
+                .andExpect(jsonPath("$.meta.totalElements", is(2)))
+                .andExpect(jsonPath("$.meta.totalPages", is(1)));
     }
 
     @Test

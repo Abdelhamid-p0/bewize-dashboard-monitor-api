@@ -1,20 +1,24 @@
 package com.bewize.monitorbackend.service;
 
-import com.bewize.monitorbackend.domains.subscription.Order;
+import com.bewize.monitorbackend.dto.PageResponse;
 import com.bewize.monitorbackend.dto.order.OrderListDto;
-import com.bewize.monitorbackend.mappers.OrderMapper;
 import com.bewize.monitorbackend.repository.OrderRepository;
+import com.bewize.monitorbackend.repository.projection.OrderListProjection;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -22,54 +26,60 @@ class OrderServiceTest {
 
     @Mock
     private OrderRepository orderRepository;
-    @Mock
-    private OrderMapper orderMapper;
 
     private OrderService orderService;
 
     @BeforeEach
     void setUp() {
-        orderService = new OrderService(orderRepository, orderMapper);
+        orderService = new OrderService(orderRepository, null); // mapper not used in new implementation
+    }
+
+    private OrderListProjection projection(String id) {
+        return new OrderListProjection() {
+            public String getId() { return id; }
+            public String getCode() { return "CODE-" + id; }
+            public com.bewize.monitorbackend.enums.OrderType getType() { return null; }
+            public com.bewize.monitorbackend.enums.OrderStatus getStatus() { return null; }
+            public com.bewize.monitorbackend.enums.PlanType getPlanType() { return null; }
+            public LocalDateTime getDate() { return null; }
+            public Float getAmount() { return null; }
+            public String getTransactionId() { return null; }
+            public SubscriptionProjection getSubscription() { return null; }
+            public StudentProjection getStudent() { return null; }
+            public DiscountProjection getDiscount() { return null; }
+        }; }
+
+    @Test
+    @DisplayName("getOrders returns mapped page response")
+    void getOrders_paged_ok() {
+        Pageable pageable = PageRequest.of(0, 2);
+        Page<OrderListProjection> page = new PageImpl<>(List.of(projection("o1"), projection("o2")), pageable, 2);
+        when(orderRepository.findAllProjectedBy(pageable)).thenReturn(page);
+
+        PageResponse<OrderListDto> resp = orderService.getOrders(pageable);
+
+        assertThat(resp.getData()).hasSize(2);
+        assertThat(resp.getData()).extracting(OrderListDto::getId).containsExactlyInAnyOrder("o1", "o2");
+        assertThat(resp.getMeta().getPage()).isEqualTo(0);
+        assertThat(resp.getMeta().getSize()).isEqualTo(2);
+        assertThat(resp.getMeta().getTotalElements()).isEqualTo(2);
+        assertThat(resp.getMeta().getTotalPages()).isEqualTo(1);
+
+        verify(orderRepository).findAllProjectedBy(pageable);
     }
 
     @Test
-    @DisplayName("getOrders returns mapped list")
-    void getOrders_ok() {
-        Order o1 = new Order(); o1.setId("o1");
-        Order o2 = new Order(); o2.setId("o2");
-        when(orderRepository.findAll()).thenReturn(List.of(o1, o2));
-
-        // dynamic mapping stub
-        when(orderMapper.toOrderListDto(any(Order.class))).thenAnswer(inv -> {
-            Order src = inv.getArgument(0);
-            OrderListDto dto = new OrderListDto();
-            dto.setId(src.getId());
-            dto.setCode("CODE-" + src.getId());
-            return dto;
-        });
-
-        List<OrderListDto> result = orderService.getOrders();
-
-        assertThat(result).hasSize(2);
-        assertThat(result).extracting(OrderListDto::getId)
-                .containsExactlyInAnyOrder("o1", "o2");
-        assertThat(result).extracting(OrderListDto::getCode)
-                .containsExactlyInAnyOrder("CODE-o1", "CODE-o2");
-
-        verify(orderRepository, times(1)).findAll();
-        verify(orderMapper, times(2)).toOrderListDto(any(Order.class));
-        verifyNoMoreInteractions(orderRepository, orderMapper);
-    }
-
-    @Test
-    @DisplayName("getOrders returns empty list when repository empty")
+    @DisplayName("getOrders returns empty page response when no data")
     void getOrders_empty() {
-        when(orderRepository.findAll()).thenReturn(List.of());
+        Pageable pageable = PageRequest.of(0, 5);
+        Page<OrderListProjection> page = new PageImpl<>(List.of(), pageable, 0);
+        when(orderRepository.findAllProjectedBy(pageable)).thenReturn(page);
 
-        List<OrderListDto> result = orderService.getOrders();
+        PageResponse<OrderListDto> resp = orderService.getOrders(pageable);
 
-        assertThat(result).isEmpty();
-        verify(orderRepository, times(1)).findAll();
-        verifyNoInteractions(orderMapper); // mapper never called
+        assertThat(resp.getData()).isEmpty();
+        assertThat(resp.getMeta().getTotalElements()).isEqualTo(0);
+        assertThat(resp.getMeta().getTotalPages()).isEqualTo(0);
+        verify(orderRepository).findAllProjectedBy(pageable);
     }
 }
