@@ -1,7 +1,7 @@
 version: "3.9"
 services:
   wize-dashboard-monitor-api:
-    image: rg.fr-par.scw.cloud/my-namespace/wize-dashboard-monitor-api:latest
+    image: rg.fr-par.scw.cloud/my-namespace/bewize-dashboard-monitor-api:latest
     container_name: wize-dashboard-monitor-api
     environment:
       # Set active profile and app port

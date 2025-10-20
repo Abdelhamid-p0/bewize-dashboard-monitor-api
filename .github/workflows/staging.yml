@@ -12,7 +12,7 @@ permissions:
 
 env:
   REGISTRY: rg.fr-par.scw.cloud/bewize-registry
-  IMAGE_NAME: bewize-dashboard-api
+  IMAGE_NAME: bewize-dashboard-monitor-api
 
 jobs:
   build-and-push:
