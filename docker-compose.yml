@@ -1,0 +1,13 @@
+version: "3.9"
+services:
+  wize-dashboard-monitor-api:
+    image: rg.fr-par.scw.cloud/my-namespace/wize-dashboard-monitor-api:latest
+    container_name: wize-dashboard-monitor-api
+    environment:
+      # Set active profile and app port
+      SPRING_PROFILES_ACTIVE: production
+      SERVER_PORT: 4001
+      JAVA_OPTS: -Xms256m -Xmx512m
+    ports:
+      - "4001:8080"
+    restart: unless-stopped
