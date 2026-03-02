@@ -4,6 +4,8 @@ import com.bewize.monitorbackend.enums.Cycle;
 import com.bewize.monitorbackend.enums.Gender;
 
 import java.sql.Date;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 public interface StudentListProjection {
 
@@ -14,7 +16,7 @@ public interface StudentListProjection {
     String getEmail();
     String getPhone();
     Gender getGender();
-    Date getsingupDate();
+    LocalDate getsingupDate();
 
     LevelProjection getLevel();
 
