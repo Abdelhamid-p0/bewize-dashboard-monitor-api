@@ -57,26 +57,78 @@ class StudentServiceTest {
 
         // create simple projection implementations
         StudentListProjection p1 = new StudentListProjection() {
-            public String getId() { return "s1"; }
-            public String getCne() { return "cne1"; }
-            public String getFirstName() { return "Ana"; }
-            public String getLastName() { return "Lee"; }
-            public String getEmail() { return "ana@example.com"; }
-            public String getPhone() { return "111"; }
-            public com.bewize.monitorbackend.enums.Gender getGender() { return null; }
-            public java.sql.Date getsingupDate() { return null; }
-            public StudentListProjection.LevelProjection getLevel() { return null; }
+            public String getId() {
+                return "s1";
+            }
+
+            public String getCne() {
+                return "cne1";
+            }
+
+            public String getFirstName() {
+                return "Ana";
+            }
+
+            public String getLastName() {
+                return "Lee";
+            }
+
+            public String getEmail() {
+                return "ana@example.com";
+            }
+
+            public String getPhone() {
+                return "111";
+            }
+
+            public com.bewize.monitorbackend.enums.Gender getGender() {
+                return null;
+            }
+
+            public java.time.LocalDate getsingupDate() {
+                return null;
+            }
+
+            public StudentListProjection.LevelProjection getLevel() {
+                return null;
+            }
         };
         StudentListProjection p2 = new StudentListProjection() {
-            public String getId() { return "s2"; }
-            public String getCne() { return "cne2"; }
-            public String getFirstName() { return "Bob"; }
-            public String getLastName() { return "Ray"; }
-            public String getEmail() { return "bob@example.com"; }
-            public String getPhone() { return "222"; }
-            public com.bewize.monitorbackend.enums.Gender getGender() { return null; }
-            public java.sql.Date getsingupDate() { return null; }
-            public StudentListProjection.LevelProjection getLevel() { return null; }
+            public String getId() {
+                return "s2";
+            }
+
+            public String getCne() {
+                return "cne2";
+            }
+
+            public String getFirstName() {
+                return "Bob";
+            }
+
+            public String getLastName() {
+                return "Ray";
+            }
+
+            public String getEmail() {
+                return "bob@example.com";
+            }
+
+            public String getPhone() {
+                return "222";
+            }
+
+            public com.bewize.monitorbackend.enums.Gender getGender() {
+                return null;
+            }
+
+            public java.time.LocalDate getsingupDate() {
+                return null;
+            }
+
+            public StudentListProjection.LevelProjection getLevel() {
+                return null;
+            }
         };
         Page<StudentListProjection> page = new PageImpl<>(java.util.List.of(p1, p2), pageable, 2);
         when(studentRepository.findAllProjectedBy(pageable)).thenReturn(page);
@@ -97,19 +149,25 @@ class StudentServiceTest {
     @DisplayName("getStudentDetails returns details with mapped orders")
     void getStudentDetails_ok() {
         String studentId = "stu-123";
-        Student student = new Student(); student.setId(studentId); student.setFirstName("Ana");
+        Student student = new Student();
+        student.setId(studentId);
+        student.setFirstName("Ana");
         when(studentRepository.findById(studentId)).thenReturn(Optional.of(student));
 
-        Order o1 = new Order(); o1.setId("o1");
-        Order o2 = new Order(); o2.setId("o2");
+        Order o1 = new Order();
+        o1.setId("o1");
+        Order o2 = new Order();
+        o2.setId("o2");
         when(orderRepository.findOrdersWithSubscriptionByStudentId(studentId)).thenReturn(List.of(o1, o2));
 
         StudentDetailsDto detailsDto = new StudentDetailsDto();
         detailsDto.setId(studentId);
         when(studentMapper.toStudentDetailsDto(student)).thenReturn(detailsDto);
 
-        OrderDto orderDto1 = new OrderDto(); orderDto1.setId("o1");
-        OrderDto orderDto2 = new OrderDto(); orderDto2.setId("o2");
+        OrderDto orderDto1 = new OrderDto();
+        orderDto1.setId("o1");
+        OrderDto orderDto2 = new OrderDto();
+        orderDto2.setId("o2");
         when(orderMapper.toOrderDto(o1)).thenReturn(orderDto1);
         when(orderMapper.toOrderDto(o2)).thenReturn(orderDto2);
 
