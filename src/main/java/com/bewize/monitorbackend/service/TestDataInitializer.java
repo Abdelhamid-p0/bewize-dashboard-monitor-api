@@ -77,7 +77,7 @@ public class TestDataInitializer implements CommandLineRunner {
                 "Fifth Year",
                 "Sixth Year"
         };
-        Cycle[] cycles = {Cycle.ELEMENTARY_SCHOOL, Cycle.MIDDLE_SCHOOL, Cycle.HIGH_SCHOOL};
+        Cycle[] cycles = { Cycle.ELEMENTARY_SCHOOL, Cycle.MIDDLE_SCHOOL, Cycle.HIGH_SCHOOL };
 
         for (int i = existing.size(); i < TARGET_LEVELS; i++) {
             Level level = new Level();
@@ -101,8 +101,10 @@ public class TestDataInitializer implements CommandLineRunner {
                 "Karim", "Meryem", "Hamza", "Asmaa", "Adil", "Wafa", "Issam", "Hajar", "Taha", "Loubna"
         };
         String[] lastNames = {
-                "Alami", "Bennani", "Tazi", "ElFassi", "Chraibi", "Benjelloun", "Kettani", "Berrada", "Sqalli", "Filali",
-                "Bouzidi", "Mansouri", "Lahlou", "Cherkaoui", "Benkirane", "Amrani", "Idrissi", "Ziani", "Naciri", "Belkadi"
+                "Alami", "Bennani", "Tazi", "ElFassi", "Chraibi", "Benjelloun", "Kettani", "Berrada", "Sqalli",
+                "Filali",
+                "Bouzidi", "Mansouri", "Lahlou", "Cherkaoui", "Benkirane", "Amrani", "Idrissi", "Ziani", "Naciri",
+                "Belkadi"
         };
 
         int startIndex = existing.size();
@@ -115,8 +117,7 @@ public class TestDataInitializer implements CommandLineRunner {
                     "%s.%s%d@example.com",
                     firstNames[i % firstNames.length].toLowerCase(),
                     lastNames[i % lastNames.length].toLowerCase(),
-                    i
-            ));
+                    i));
             student.setPhone(String.format("06%08d", 10000000 + i));
             student.setGender(i % 2 == 0 ? Gender.MALE : Gender.FEMALE);
             student.setSingupDate(toDate(LocalDate.now().minusDays(i)));
@@ -140,7 +141,8 @@ public class TestDataInitializer implements CommandLineRunner {
             return existing;
         }
 
-        String[] prefixes = {"PROMO", "SUMMER", "WINTER", "SPRING", "FLASH", "VIP", "SPECIAL", "STUDENT", "SCHOOL", "EVENT"};
+        String[] prefixes = { "PROMO", "SUMMER", "WINTER", "SPRING", "FLASH", "VIP", "SPECIAL", "STUDENT", "SCHOOL",
+                "EVENT" };
 
         for (int i = existing.size(); i < TARGET_DISCOUNTS; i++) {
             Discount discount = new Discount();
@@ -163,12 +165,13 @@ public class TestDataInitializer implements CommandLineRunner {
         OrderType[] orderTypes = OrderType.values();
         OrderStatus[] orderStatuses = OrderStatus.values();
         PlanType[] planTypes = PlanType.values();
-        float[] baseAmounts = {99.99f, 149.99f, 199.99f, 249.99f, 299.99f, 399.99f, 499.99f};
+        float[] baseAmounts = { 99.99f, 149.99f, 199.99f, 249.99f, 299.99f, 399.99f, 499.99f };
 
         Random random = new Random(42);
         for (long i = existingOrders; i < TARGET_ORDERS; i++) {
             Student student = students.get((int) (i % students.size()));
-            Discount discount = (i % 4 == 0 || discounts.isEmpty()) ? null : discounts.get((int) (i % discounts.size()));
+            Discount discount = (i % 4 == 0 || discounts.isEmpty()) ? null
+                    : discounts.get((int) (i % discounts.size()));
 
             float initialAmount = baseAmounts[(int) (i % baseAmounts.length)];
             float finalAmount = Order.calculateAmount(initialAmount, discount);
