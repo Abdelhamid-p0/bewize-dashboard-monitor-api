@@ -67,9 +67,8 @@ public class Student extends User {
     @Enumerated(EnumType.STRING)
     private AuthProvider provider;
 
-
     @Column(columnDefinition = "DATE")
-    private Date singupDate;
+    private Date signupDate;
 
     @Column(columnDefinition = "DATE")
     private Date lastVisit;
@@ -82,7 +81,7 @@ public class Student extends User {
 
     private String notificationId;
 
-    public static Student create(String sub, String email, String firstName, String lastName, AuthProvider provider){
+    public static Student create(String sub, String email, String firstName, String lastName, AuthProvider provider) {
         Student student = new Student();
         student.sub = sub;
         student.email = Objects.isNull(email) ? student.sub : email;
@@ -91,11 +90,12 @@ public class Student extends User {
         student.provider = provider;
         student.cne = student.email;
         student.active = true;
-        student.singupDate = new Date();
+        student.signupDate = new Date();
         return student;
     }
 
-    public static Student create(String sub, String email, String firstName, String lastName, AuthProvider provider ,String storeCountry){
+    public static Student create(String sub, String email, String firstName, String lastName, AuthProvider provider,
+            String storeCountry) {
         Student student = new Student();
         student.sub = sub;
         student.email = Objects.isNull(email) ? student.sub : email;
@@ -104,12 +104,13 @@ public class Student extends User {
         student.provider = provider;
         student.cne = student.email;
         student.active = true;
-        student.singupDate = new Date();
+        student.signupDate = new Date();
         student.storeCountry = storeCountry;
         return student;
     }
 
-    public static Student create(String sub, String email, String firstName, String lastName, AuthProvider provider ,String storeCountry , String notificationId){
+    public static Student create(String sub, String email, String firstName, String lastName, AuthProvider provider,
+            String storeCountry, String notificationId) {
         Student student = new Student();
         student.sub = sub;
         student.email = Objects.isNull(email) ? student.sub : email;
@@ -118,7 +119,7 @@ public class Student extends User {
         student.provider = provider;
         student.cne = student.email;
         student.active = true;
-        student.singupDate = new Date();
+        student.signupDate = new Date();
         student.storeCountry = storeCountry;
         student.notificationId = notificationId;
         return student;
