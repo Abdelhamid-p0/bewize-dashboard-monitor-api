@@ -19,43 +19,41 @@ import java.util.List;
 public interface StudentRepository extends JpaRepository<Student, String> {
 
     @Query("""
-        select s
-        from Student s
-        left join fetch s.level l
-    """)
+                select s
+                from Student s
+                left join fetch s.level l
+            """)
     Page<StudentListProjection> findAllProjectedBy(Pageable pageable);
 
-
     @Query(value = """
-        SELECT to_char(date_trunc('month', singup_date), 'YYYY-MM') as label, count(*) as count
-        FROM student s
-        WHERE extract(year from singup_date) = :year
-        GROUP BY 1
-        ORDER BY 1
-        """, nativeQuery = true)
+            SELECT to_char(date_trunc('month', singup_date), 'YYYY-MM') as label, count(*) as count
+            FROM student s
+            WHERE extract(year from singup_date) = :year
+            GROUP BY 1
+            ORDER BY 1
+            """, nativeQuery = true)
     List<DashboardMonthCountProjection> findStudentCountsByMonth(@Param("year") int year);
 
     @Query(value = """
-        SELECT to_char(d::date, 'YYYY-MM-DD') as label, coalesce(agg.count, 0) as count
-        FROM (
-          SELECT generate_series(
-             date_trunc('month', make_date(:year, :month, 1))::date,
-             (date_trunc('month', make_date(:year, :month, 1)) + interval '1 month - 1 day')::date,
-             '1 day'
-          ) as d
-        ) days
-        LEFT JOIN (
-          SELECT date_trunc('day', singup_date)::date as day, count(*) as count
-          FROM student
-          WHERE extract(year from singup_date) = :year AND extract(month from singup_date) = :month
-          GROUP BY day
-        ) agg ON agg.day = days.d
-        ORDER BY days.d
-        """, nativeQuery = true)
+            SELECT to_char(d::date, 'YYYY-MM-DD') as label, coalesce(agg.count, 0) as count
+            FROM (
+              SELECT generate_series(
+                 date_trunc('month', make_date(:year, :month, 1))::date,
+                 (date_trunc('month', make_date(:year, :month, 1)) + interval '1 month - 1 day')::date,
+                 '1 day'
+              ) as d
+            ) days
+            LEFT JOIN (
+              SELECT date_trunc('day', singup_date)::date as day, count(*) as count
+              FROM student
+              WHERE extract(year from singup_date) = :year AND extract(month from singup_date) = :month
+              GROUP BY day
+            ) agg ON agg.day = days.d
+            ORDER BY days.d
+            """, nativeQuery = true)
     List<DashboardDayCountProjection> findStudentCountsByDay(
             @Param("year") int year,
-            @Param("month") int month
-    );
+            @Param("month") int month);
 
     @Query("SELECT COUNT(s) FROM Student s WHERE YEAR(s.singupDate) = :year AND MONTH(s.singupDate) = :month")
     long countByYearAndMonth(@Param("year") int year, @Param("month") int month);
