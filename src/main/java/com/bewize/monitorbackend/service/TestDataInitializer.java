@@ -120,7 +120,7 @@ public class TestDataInitializer implements CommandLineRunner {
                     i));
             student.setPhone(String.format("06%08d", 10000000 + i));
             student.setGender(i % 2 == 0 ? Gender.MALE : Gender.FEMALE);
-            student.setSingupDate(toDate(LocalDate.now().minusDays(i)));
+            student.setSignupDate(toDate(LocalDate.now().minusDays(i)));
             student.setLastVisit(toDate(LocalDate.now().minusDays(i % 30)));
             student.setBirthday(toDate(LocalDate.of(2007 - (i % 6), ((i % 12) + 1), ((i % 28) + 1))));
             student.setLevel(levels.get(i % levels.size()));
