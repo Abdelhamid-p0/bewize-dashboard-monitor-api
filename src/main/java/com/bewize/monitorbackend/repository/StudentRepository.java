@@ -1,7 +1,6 @@
 package com.bewize.monitorbackend.repository;
 
 import com.bewize.monitorbackend.domains.user.Student;
-import com.bewize.monitorbackend.dto.student.StudentListDto;
 import com.bewize.monitorbackend.repository.projection.DashboardDayCountProjection;
 import com.bewize.monitorbackend.repository.projection.DashboardMonthCountProjection;
 import com.bewize.monitorbackend.repository.projection.StudentListProjection;
@@ -12,7 +11,6 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import java.sql.Date;
 import java.util.List;
 
 @Repository
@@ -26,9 +24,9 @@ public interface StudentRepository extends JpaRepository<Student, String> {
     Page<StudentListProjection> findAllProjectedBy(Pageable pageable);
 
     @Query(value = """
-            SELECT to_char(date_trunc('month', singup_date), 'YYYY-MM') as label, count(*) as count
+            SELECT to_char(date_trunc('month', signup_date), 'YYYY-MM') as label, count(*) as count
             FROM student s
-            WHERE extract(year from singup_date) = :year
+            WHERE extract(year from signup_date) = :year
             GROUP BY 1
             ORDER BY 1
             """, nativeQuery = true)
@@ -44,9 +42,9 @@ public interface StudentRepository extends JpaRepository<Student, String> {
               ) as d
             ) days
             LEFT JOIN (
-              SELECT date_trunc('day', singup_date)::date as day, count(*) as count
+              SELECT date_trunc('day', signup_date)::date as day, count(*) as count
               FROM student
-              WHERE extract(year from singup_date) = :year AND extract(month from singup_date) = :month
+              WHERE extract(year from signup_date) = :year AND extract(month from signup_date) = :month
               GROUP BY day
             ) agg ON agg.day = days.d
             ORDER BY days.d
@@ -55,6 +53,10 @@ public interface StudentRepository extends JpaRepository<Student, String> {
             @Param("year") int year,
             @Param("month") int month);
 
-    @Query("SELECT COUNT(s) FROM Student s WHERE YEAR(s.singupDate) = :year AND MONTH(s.singupDate) = :month")
+    @Query(value = """
+            SELECT COUNT(*) FROM student
+            WHERE extract(year from signup_date) = :year
+            AND extract(month from signup_date) = :month
+            """, nativeQuery = true)
     long countByYearAndMonth(@Param("year") int year, @Param("month") int month);
 }
