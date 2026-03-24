@@ -32,7 +32,6 @@ public class StudentService {
     private final StudentMapper studentMapper;
     private final OrderMapper orderMapper;
 
-
     @Transactional(readOnly = true)
     public PageResponse<StudentListDto> getStudents(Pageable pageable) {
 
@@ -47,7 +46,7 @@ public class StudentService {
             dto.setEmail(p.getEmail());
             dto.setPhone(p.getPhone());
             dto.setGender(p.getGender());
-            dto.setSingupDate(p.getsingupDate());
+            dto.setSignupDate(p.getsignupDate());
 
             LevelDto level = new LevelDto();
             if (p.getLevel() != null) {
@@ -63,12 +62,10 @@ public class StudentService {
                 page.getNumber(),
                 page.getSize(),
                 page.getTotalElements(),
-                page.getTotalPages()
-        );
+                page.getTotalPages());
 
         return new PageResponse<>(data, meta);
     }
-
 
     @Transactional(readOnly = true)
     public StudentDetailsDto getStudentDetails(String studentId) {

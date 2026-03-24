@@ -10,18 +10,26 @@ import java.time.LocalDateTime;
 public interface StudentListProjection {
 
     String getId();
+
     String getCne();
+
     String getFirstName();
+
     String getLastName();
+
     String getEmail();
+
     String getPhone();
+
     Gender getGender();
-    LocalDate getsingupDate();
+
+    LocalDate getsignupDate();
 
     LevelProjection getLevel();
 
     interface LevelProjection {
         String getLevelName();
+
         Cycle getCycle();
     }
 }

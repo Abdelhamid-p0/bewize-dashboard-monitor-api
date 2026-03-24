@@ -19,7 +19,7 @@ public class StudentListDto extends StudentDto {
 
     private String phone;
     private Gender gender;
-    private LocalDate singupDate;
+    private LocalDate signupDate;
     private LevelDto level;
 
 }
