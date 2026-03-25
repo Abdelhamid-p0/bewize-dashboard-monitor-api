@@ -67,8 +67,7 @@ public class Student extends User {
     @Enumerated(EnumType.STRING)
     private AuthProvider provider;
 
-
-    @Column(columnDefinition = "DATE")
+    @Column(name = "signup_date", columnDefinition = "DATE")
     private Date singupDate;
 
     @Column(columnDefinition = "DATE")
@@ -82,7 +81,7 @@ public class Student extends User {
 
     private String notificationId;
 
-    public static Student create(String sub, String email, String firstName, String lastName, AuthProvider provider){
+    public static Student create(String sub, String email, String firstName, String lastName, AuthProvider provider) {
         Student student = new Student();
         student.sub = sub;
         student.email = Objects.isNull(email) ? student.sub : email;
@@ -95,7 +94,8 @@ public class Student extends User {
         return student;
     }
 
-    public static Student create(String sub, String email, String firstName, String lastName, AuthProvider provider ,String storeCountry){
+    public static Student create(String sub, String email, String firstName, String lastName, AuthProvider provider,
+            String storeCountry) {
         Student student = new Student();
         student.sub = sub;
         student.email = Objects.isNull(email) ? student.sub : email;
@@ -109,7 +109,8 @@ public class Student extends User {
         return student;
     }
 
-    public static Student create(String sub, String email, String firstName, String lastName, AuthProvider provider ,String storeCountry , String notificationId){
+    public static Student create(String sub, String email, String firstName, String lastName, AuthProvider provider,
+            String storeCountry, String notificationId) {
         Student student = new Student();
         student.sub = sub;
         student.email = Objects.isNull(email) ? student.sub : email;
