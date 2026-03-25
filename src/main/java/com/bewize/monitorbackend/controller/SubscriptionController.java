@@ -1,6 +1,9 @@
 package com.bewize.monitorbackend.controller;
 
 import com.bewize.monitorbackend.dto.PageResponse;
+import com.bewize.monitorbackend.dto.subscription.ManualSubscriptionCreateRequest;
+import com.bewize.monitorbackend.dto.subscription.ManualSubscriptionResponse;
+import com.bewize.monitorbackend.dto.subscription.ManualSubscriptionStudentOptionDto;
 import com.bewize.monitorbackend.dto.subscription.SubscriptionCreateRequest;
 import com.bewize.monitorbackend.dto.subscription.SubscriptionListDto;
 import com.bewize.monitorbackend.dto.subscription.SubscriptionUpdateRequest;
@@ -53,7 +56,8 @@ public class SubscriptionController {
 
     @Operation(summary = "Update subscription")
     @PutMapping("/{id}")
-    public ResponseEntity<SubscriptionListDto> update(@PathVariable String id, @RequestBody SubscriptionUpdateRequest req) {
+    public ResponseEntity<SubscriptionListDto> update(@PathVariable String id,
+            @RequestBody SubscriptionUpdateRequest req) {
         log.info("request to update subscription {}", id);
         SubscriptionListDto updated = subscriptionService.updateSubscription(id, req);
         log.info("subscription updated: {}", id);
@@ -67,5 +71,22 @@ public class SubscriptionController {
         subscriptionService.deleteSubscription(id);
         log.info("subscription deleted: {}", id);
         return ResponseEntity.noContent().build();
+    }
+
+    @Operation(summary = "List students for manual subscription dropdown")
+    @GetMapping("/manual/students")
+    public ResponseEntity<List<ManualSubscriptionStudentOptionDto>> getManualSubscriptionStudents() {
+        return ResponseEntity.ok(subscriptionService.getManualSubscriptionStudents());
+    }
+
+    @Operation(summary = "Create manual subscription")
+    @PostMapping("/manual")
+    public ResponseEntity<ManualSubscriptionResponse> createManual(@RequestBody ManualSubscriptionCreateRequest req) {
+        ManualSubscriptionResponse created = subscriptionService.createManualSubscription(req);
+        URI location = ServletUriComponentsBuilder.fromCurrentRequest()
+                .path("/{id}")
+                .buildAndExpand(created.getId())
+                .toUri();
+        return ResponseEntity.created(location).body(created);
     }
 }

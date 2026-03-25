@@ -65,4 +65,17 @@ public interface SubscriptionRepository
   List<DashboardDayCountProjection> findSubscriptionCountsByDay(
       @Param("year") int year,
       @Param("month") int month);
+
+  @Query("""
+      SELECT s
+      FROM Subscription s
+      JOIN s.order o
+      JOIN o.student st
+      WHERE st.id = :studentId
+        AND s.endDate >= :referenceDate
+      ORDER BY s.endDate DESC
+      """)
+  List<Subscription> findActiveSubscriptionsByStudentId(
+      @Param("studentId") String studentId,
+      @Param("referenceDate") LocalDateTime referenceDate);
 }
