@@ -13,8 +13,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Tag(name = "Data table orders Resource")
 @RestController
@@ -33,5 +35,20 @@ public class DataTableOrderController {
             @RequestParam(required = false) String planType,
             @RequestParam(required = false) String search) {
         return ResponseEntity.ok(dataTableService.getOrderRows(pageable, fields, status, planType, search));
+    }
+
+    @Operation(summary = "Get order filter options")
+    @GetMapping("/filters")
+    public ResponseEntity<Map<String, List<Map<String, String>>>> getOrderFilters() {
+        Map<String, List<Map<String, String>>> filters = Map.of(
+                "status", toOptions("PAID", "UNPAID", "FREE"),
+                "planType", toOptions("FREEMIUM", "PREMIUM"));
+        return ResponseEntity.ok(filters);
+    }
+
+    private List<Map<String, String>> toOptions(String... values) {
+        return Arrays.stream(values)
+                .map(value -> Map.of("label", value, "value", value))
+                .collect(Collectors.toList());
     }
 }
