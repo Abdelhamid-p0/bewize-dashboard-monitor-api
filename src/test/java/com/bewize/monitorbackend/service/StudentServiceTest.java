@@ -85,7 +85,7 @@ class StudentServiceTest {
                 return null;
             }
 
-            public java.time.LocalDate getsingupDate() {
+            public java.time.LocalDate getsignupDate() {
                 return null;
             }
 
@@ -122,7 +122,7 @@ class StudentServiceTest {
                 return null;
             }
 
-            public java.time.LocalDate getsingupDate() {
+            public java.time.LocalDate getsignupDate() {
                 return null;
             }
 
