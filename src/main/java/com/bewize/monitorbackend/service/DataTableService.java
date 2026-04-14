@@ -102,35 +102,38 @@ public class DataTableService {
             if (plan.isPresent()) {
                 PlanType planTypeValue = plan.get();
                 spec = spec.and((root, query, cb) -> {
-                    var subquery = query.subquery(Integer.class);
-                    var orderRoot = subquery.from(Order.class);
-                    subquery.select(cb.literal(1));
-                    subquery.where(
-                            cb.equal(orderRoot.get("student"), root),
-                            cb.equal(orderRoot.get("planType"), planTypeValue));
-                    return cb.exists(subquery);
+                    var latestOrderDateSubquery = query.subquery(LocalDateTime.class);
+                    var latestOrderDateRoot = latestOrderDateSubquery.from(Order.class);
+                    latestOrderDateSubquery.select(cb.greatest(latestOrderDateRoot.get("date")));
+                    latestOrderDateSubquery.where(cb.equal(latestOrderDateRoot.get("student"), root));
+
+                    var latestOrderPlanSubquery = query.subquery(Integer.class);
+                    var latestOrderPlanRoot = latestOrderPlanSubquery.from(Order.class);
+                    latestOrderPlanSubquery.select(cb.literal(1));
+                    latestOrderPlanSubquery.where(
+                            cb.equal(latestOrderPlanRoot.get("student"), root),
+                            cb.equal(latestOrderPlanRoot.get("date"), latestOrderDateSubquery),
+                            cb.equal(latestOrderPlanRoot.get("planType"), planTypeValue));
+
+                    return cb.exists(latestOrderPlanSubquery);
                 });
+            } else {
+                // Strict filtering: invalid plan value must return no rows.
+                spec = spec.and((root, query, cb) -> cb.disjunction());
             }
         }
 
-        // Exclude placeholder students where every datatable business field is empty.
-        spec = spec.and((root, query, cb) -> {
-            var latestPlanExists = query.subquery(Integer.class);
-            var orderRoot = latestPlanExists.from(Order.class);
-            latestPlanExists.select(cb.literal(1));
-            latestPlanExists.where(
-                    cb.equal(orderRoot.get("student"), root),
-                    cb.isNotNull(orderRoot.get("planType")));
-
-            return cb.or(
-                    cb.isNotNull(root.get("firstName")),
-                    cb.isNotNull(root.get("lastName")),
-                    cb.isNotNull(root.get("phone")),
-                    cb.isNotNull(root.get("gender")),
-                    cb.isNotNull(root.get("singupDate")),
-                    cb.isNotNull(root.get("level")),
-                    cb.exists(latestPlanExists));
-        });
+        // Exclude placeholder students where all core identity fields are empty.
+        // Keep this predicate subquery-free to avoid slowing down every paginated request.
+        spec = spec.and((root, query, cb) -> cb.or(
+            cb.isNotNull(root.get("firstName")),
+            cb.isNotNull(root.get("lastName")),
+            cb.isNotNull(root.get("phone")),
+            cb.isNotNull(root.get("gender")),
+            cb.isNotNull(root.get("singupDate")),
+            cb.isNotNull(root.get("level")),
+            cb.isNotNull(root.get("email")),
+            cb.isNotNull(root.get("cne"))));
 
         Page<Student> page = studentRepository.findAll(spec, pageable);
 
@@ -188,6 +191,9 @@ public class DataTableService {
             if (parsedPlanType.isPresent()) {
                 PlanType value = parsedPlanType.get();
                 spec = spec.and((root, query, cb) -> cb.equal(root.get("planType"), value));
+            } else {
+                // Strict filtering: invalid plan value must return no rows.
+                spec = spec.and((root, query, cb) -> cb.disjunction());
             }
         }
 
@@ -265,6 +271,9 @@ public class DataTableService {
             if (parsedPlanType.isPresent()) {
                 PlanType value = parsedPlanType.get();
                 spec = spec.and((root, query, cb) -> cb.equal(root.join("order").get("planType"), value));
+            } else {
+                // Strict filtering: invalid plan value must return no rows.
+                spec = spec.and((root, query, cb) -> cb.disjunction());
             }
         }
 
