@@ -113,6 +113,25 @@ public class DataTableService {
             }
         }
 
+        // Exclude placeholder students where every datatable business field is empty.
+        spec = spec.and((root, query, cb) -> {
+            var latestPlanExists = query.subquery(Integer.class);
+            var orderRoot = latestPlanExists.from(Order.class);
+            latestPlanExists.select(cb.literal(1));
+            latestPlanExists.where(
+                    cb.equal(orderRoot.get("student"), root),
+                    cb.isNotNull(orderRoot.get("planType")));
+
+            return cb.or(
+                    cb.isNotNull(root.get("firstName")),
+                    cb.isNotNull(root.get("lastName")),
+                    cb.isNotNull(root.get("phone")),
+                    cb.isNotNull(root.get("gender")),
+                    cb.isNotNull(root.get("singupDate")),
+                    cb.isNotNull(root.get("level")),
+                    cb.exists(latestPlanExists));
+        });
+
         Page<Student> page = studentRepository.findAll(spec, pageable);
 
         List<Map<String, Object>> data = page.getContent().stream().map(student -> {
