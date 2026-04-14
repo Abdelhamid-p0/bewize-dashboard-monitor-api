@@ -117,8 +117,9 @@ public class DataTableService {
 
         List<Map<String, Object>> data = page.getContent().stream().map(student -> {
             Map<String, Object> row = new HashMap<>();
-            Optional<Order> latestOrder = orderRepository.findFirstByStudentIdOrderByDateDesc(student.getId());
-            String latestPlanType = latestOrder.map(Order::getPlanType).map(Enum::name).orElse(null);
+            String latestPlanType = orderRepository.findLatestPlanTypeByStudentId(student.getId())
+                    .map(Enum::name)
+                    .orElse(null);
 
             put(row, selectedFields, "id", student.getId());
             put(row, selectedFields, "name", buildFullName(student.getFirstName(), student.getLastName()));

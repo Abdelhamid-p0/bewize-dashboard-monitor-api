@@ -1,7 +1,9 @@
 package com.bewize.monitorbackend.controller;
 
 import com.bewize.monitorbackend.dto.PageResponse;
+import com.bewize.monitorbackend.dto.datatable.FilterOptionDto;
 import com.bewize.monitorbackend.service.DataTableService;
+import com.bewize.monitorbackend.service.DataTableFilterOptionsService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -25,6 +27,7 @@ import java.util.Map;
 public class DataTableDiscountController {
 
     private final DataTableService dataTableService;
+    private final DataTableFilterOptionsService filterOptionsService;
 
     @Operation(summary = "List discounts for data table with fields and filters")
     @GetMapping
@@ -46,5 +49,11 @@ public class DataTableDiscountController {
                 search,
                 startDate,
                 endDate));
+    }
+
+    @Operation(summary = "Get discount filter options")
+    @GetMapping("/filters")
+    public ResponseEntity<Map<String, List<FilterOptionDto>>> getDiscountFilters() {
+        return ResponseEntity.ok(filterOptionsService.getDiscountFilterOptions());
     }
 }

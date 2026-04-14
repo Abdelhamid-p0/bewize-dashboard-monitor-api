@@ -2,6 +2,7 @@ package com.bewize.monitorbackend.repository;
 
 import com.bewize.monitorbackend.domains.subscription.Subscription;
 import com.bewize.monitorbackend.dto.subscription.SubscriptionListDto;
+import com.bewize.monitorbackend.enums.PlanType;
 import com.bewize.monitorbackend.repository.projection.DashboardDayCountProjection;
 import com.bewize.monitorbackend.repository.projection.DashboardMonthCountProjection;
 import com.bewize.monitorbackend.repository.projection.SubscriptionListProjection;
@@ -78,4 +79,11 @@ public interface SubscriptionRepository
   List<Subscription> findActiveSubscriptionsByStudentId(
       @Param("studentId") String studentId,
       @Param("referenceDate") LocalDateTime referenceDate);
+
+  @Query("select distinct o.planType from Subscription s join s.order o where o.planType is not null order by o.planType")
+  List<PlanType> findDistinctOrderPlanTypes();
+
+  boolean existsByEndDateGreaterThanEqual(LocalDateTime referenceDate);
+
+  boolean existsByEndDateLessThan(LocalDateTime referenceDate);
 }

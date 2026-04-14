@@ -1,6 +1,8 @@
 package com.bewize.monitorbackend.repository;
 
 import com.bewize.monitorbackend.domains.subscription.Order;
+import com.bewize.monitorbackend.enums.OrderStatus;
+import com.bewize.monitorbackend.enums.PlanType;
 import com.bewize.monitorbackend.repository.projection.DashboardDayCountProjection;
 import com.bewize.monitorbackend.repository.projection.DashboardMonthCountProjection;
 import com.bewize.monitorbackend.repository.projection.OrderListProjection;
@@ -15,6 +17,7 @@ import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 public interface OrderRepository extends JpaRepository<Order, String>, JpaSpecificationExecutor<Order> {
 
@@ -31,7 +34,22 @@ public interface OrderRepository extends JpaRepository<Order, String>, JpaSpecif
   @EntityGraph(attributePaths = { "student", "discount", "subscription" })
   Page<Order> findAll(Specification<Order> spec, Pageable pageable);
 
-  java.util.Optional<Order> findFirstByStudentIdOrderByDateDesc(String studentId);
+  @Query("select o.planType from Order o where o.student.id = :studentId order by o.date desc")
+  List<PlanType> findPlanTypesByStudentIdOrderByDateDesc(@Param("studentId") String studentId, Pageable pageable);
+
+  @Query("select distinct o.status from Order o where o.status is not null order by o.status")
+  List<OrderStatus> findDistinctStatuses();
+
+  @Query("select distinct o.planType from Order o where o.planType is not null order by o.planType")
+  List<PlanType> findDistinctPlanTypes();
+
+  default Optional<PlanType> findLatestPlanTypeByStudentId(String studentId) {
+    List<PlanType> values = findPlanTypesByStudentIdOrderByDateDesc(studentId, Pageable.ofSize(1));
+    if (values == null || values.isEmpty()) {
+      return Optional.empty();
+    }
+    return Optional.ofNullable(values.get(0));
+  }
 
   @Query("SELECT o FROM Order o LEFT JOIN FETCH o.subscription WHERE o.student.id = :studentId")
   List<Order> findOrdersWithSubscriptionByStudentId(@Param("studentId") String studentId);

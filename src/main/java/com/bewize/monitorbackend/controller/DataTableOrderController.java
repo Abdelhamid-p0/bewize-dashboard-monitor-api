@@ -1,7 +1,9 @@
 package com.bewize.monitorbackend.controller;
 
 import com.bewize.monitorbackend.dto.PageResponse;
+import com.bewize.monitorbackend.dto.datatable.FilterOptionDto;
 import com.bewize.monitorbackend.service.DataTableService;
+import com.bewize.monitorbackend.service.DataTableFilterOptionsService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -13,10 +15,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 @Tag(name = "Data table orders Resource")
 @RestController
@@ -25,6 +25,7 @@ import java.util.stream.Collectors;
 public class DataTableOrderController {
 
     private final DataTableService dataTableService;
+    private final DataTableFilterOptionsService filterOptionsService;
 
     @Operation(summary = "List orders for data table with fields and filters")
     @GetMapping
@@ -39,16 +40,7 @@ public class DataTableOrderController {
 
     @Operation(summary = "Get order filter options")
     @GetMapping("/filters")
-    public ResponseEntity<Map<String, List<Map<String, String>>>> getOrderFilters() {
-        Map<String, List<Map<String, String>>> filters = Map.of(
-                "status", toOptions("PAID", "UNPAID", "FREE"),
-                "planType", toOptions("FREEMIUM", "PREMIUM"));
-        return ResponseEntity.ok(filters);
-    }
-
-    private List<Map<String, String>> toOptions(String... values) {
-        return Arrays.stream(values)
-                .map(value -> Map.of("label", value, "value", value))
-                .collect(Collectors.toList());
+    public ResponseEntity<Map<String, List<FilterOptionDto>>> getOrderFilters() {
+        return ResponseEntity.ok(filterOptionsService.getOrderFilterOptions());
     }
 }
