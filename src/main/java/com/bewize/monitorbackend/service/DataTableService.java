@@ -124,16 +124,17 @@ public class DataTableService {
         }
 
         // Exclude placeholder students where all core identity fields are empty.
-        // Keep this predicate subquery-free to avoid slowing down every paginated request.
+        // Keep this predicate subquery-free to avoid slowing down every paginated
+        // request.
         spec = spec.and((root, query, cb) -> cb.or(
-            cb.isNotNull(root.get("firstName")),
-            cb.isNotNull(root.get("lastName")),
-            cb.isNotNull(root.get("phone")),
-            cb.isNotNull(root.get("gender")),
-            cb.isNotNull(root.get("singupDate")),
-            cb.isNotNull(root.get("level")),
-            cb.isNotNull(root.get("email")),
-            cb.isNotNull(root.get("cne"))));
+                cb.isNotNull(root.get("firstName")),
+                cb.isNotNull(root.get("lastName")),
+                cb.isNotNull(root.get("phone")),
+                cb.isNotNull(root.get("gender")),
+                cb.isNotNull(root.get("singupDate")),
+                cb.isNotNull(root.get("level")),
+                cb.isNotNull(root.get("email")),
+                cb.isNotNull(root.get("cne"))));
 
         Page<Student> page = studentRepository.findAll(spec, pageable);
 
