@@ -155,9 +155,7 @@ public class DataTableService {
 
             String levelLabel = null;
             if (student.getLevel() != null) {
-                String levelName = student.getLevel().getLevelName();
-                String cycleName = student.getLevel().getCycle() != null ? student.getLevel().getCycle().name() : null;
-                levelLabel = cycleName != null ? levelName + " (" + cycleName + ")" : levelName;
+                levelLabel = student.getLevel().getLevelName();
             }
             put(row, selectedFields, "level", levelLabel);
 
