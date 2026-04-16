@@ -43,6 +43,14 @@ public interface OrderRepository extends JpaRepository<Order, String>, JpaSpecif
   @Query("select distinct o.planType from Order o where o.planType is not null order by o.planType")
   List<PlanType> findDistinctPlanTypes();
 
+  @Query(value = """
+      SELECT DISTINCT ON (o.student_id) o.student_id, o.plan_type
+      FROM orders o
+      WHERE o.student_id IN (:studentIds)
+      ORDER BY o.student_id, o.date DESC, o.id DESC
+      """, nativeQuery = true)
+  List<Object[]> findLatestPlanTypesByStudentIds(@Param("studentIds") List<String> studentIds);
+
   default Optional<PlanType> findLatestPlanTypeByStudentId(String studentId) {
     List<PlanType> values = findPlanTypesByStudentIdOrderByDateDesc(studentId, Pageable.ofSize(1));
     if (values == null || values.isEmpty()) {

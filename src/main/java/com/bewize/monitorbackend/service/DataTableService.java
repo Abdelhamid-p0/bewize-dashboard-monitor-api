@@ -77,7 +77,8 @@ public class DataTableService {
                 Gender g = Gender.valueOf(gender.trim().toUpperCase());
                 spec = spec.and((root, query, cb) -> cb.equal(root.get("gender"), g));
             } catch (IllegalArgumentException ignored) {
-                // Ignore invalid enum value to keep endpoint tolerant.
+                // Strict filtering: invalid value must return no rows.
+                spec = spec.and((root, query, cb) -> cb.disjunction());
             }
         }
 
@@ -86,7 +87,8 @@ public class DataTableService {
                 Cycle cycleValue = Cycle.valueOf(cycle.trim().toUpperCase());
                 spec = spec.and((root, query, cb) -> cb.equal(root.join("level").get("cycle"), cycleValue));
             } catch (IllegalArgumentException ignored) {
-                // Ignore invalid enum value to keep endpoint tolerant.
+                // Strict filtering: invalid value must return no rows.
+                spec = spec.and((root, query, cb) -> cb.disjunction());
             }
         }
 
@@ -123,26 +125,17 @@ public class DataTableService {
             }
         }
 
-        // Exclude placeholder students where all core identity fields are empty.
-        // Keep this predicate subquery-free to avoid slowing down every paginated
-        // request.
-        spec = spec.and((root, query, cb) -> cb.or(
-                cb.isNotNull(root.get("firstName")),
-                cb.isNotNull(root.get("lastName")),
-                cb.isNotNull(root.get("phone")),
-                cb.isNotNull(root.get("gender")),
-                cb.isNotNull(root.get("singupDate")),
-                cb.isNotNull(root.get("level")),
-                cb.isNotNull(root.get("email")),
-                cb.isNotNull(root.get("cne"))));
-
         Page<Student> page = studentRepository.findAll(spec, pageable);
+
+        Map<String, String> latestPlanTypeByStudentId = loadLatestPlanTypeByStudentIds(
+            page.getContent().stream()
+                .map(Student::getId)
+                .filter(Objects::nonNull)
+                .toList());
 
         List<Map<String, Object>> data = page.getContent().stream().map(student -> {
             Map<String, Object> row = new HashMap<>();
-            String latestPlanType = orderRepository.findLatestPlanTypeByStudentId(student.getId())
-                    .map(Enum::name)
-                    .orElse(null);
+            String latestPlanType = latestPlanTypeByStudentId.get(student.getId());
 
             put(row, selectedFields, "id", student.getId());
             put(row, selectedFields, "name", buildFullName(student.getFirstName(), student.getLastName()));
@@ -181,7 +174,8 @@ public class DataTableService {
                 OrderStatus statusValue = OrderStatus.valueOf(status.trim().toUpperCase());
                 spec = spec.and((root, query, cb) -> cb.equal(root.get("status"), statusValue));
             } catch (IllegalArgumentException ignored) {
-                // Ignore invalid enum value to keep endpoint tolerant.
+                // Strict filtering: invalid value must return no rows.
+                spec = spec.and((root, query, cb) -> cb.disjunction());
             }
         }
 
@@ -261,6 +255,9 @@ public class DataTableService {
                 spec = spec.and((root, query, cb) -> cb.greaterThanOrEqualTo(root.get("endDate"), LocalDateTime.now()));
             } else if (Objects.equals(normalized, "INACTIVE")) {
                 spec = spec.and((root, query, cb) -> cb.lessThan(root.get("endDate"), LocalDateTime.now()));
+            } else {
+                // Strict filtering: invalid value must return no rows.
+                spec = spec.and((root, query, cb) -> cb.disjunction());
             }
         }
 
@@ -360,7 +357,8 @@ public class DataTableService {
                 Integer p = Integer.parseInt(percentage.trim());
                 spec = spec.and((root, query, cb) -> cb.equal(root.get("percentage"), p));
             } catch (NumberFormatException ignored) {
-                // Ignore invalid number value.
+                // Strict filtering: invalid value must return no rows.
+                spec = spec.and((root, query, cb) -> cb.disjunction());
             }
         }
 
@@ -454,6 +452,26 @@ public class DataTableService {
 
     private boolean isActive(LocalDateTime endDate) {
         return endDate != null && !endDate.isBefore(LocalDateTime.now());
+    }
+
+    private Map<String, String> loadLatestPlanTypeByStudentIds(List<String> studentIds) {
+        if (studentIds == null || studentIds.isEmpty()) {
+            return Map.of();
+        }
+
+        Map<String, String> latestPlanTypeByStudentId = new HashMap<>();
+        List<Object[]> rows = orderRepository.findLatestPlanTypesByStudentIds(studentIds);
+        for (Object[] row : rows) {
+            if (row == null || row.length < 2 || row[0] == null) {
+                continue;
+            }
+
+            String studentId = String.valueOf(row[0]);
+            String planType = row[1] != null ? String.valueOf(row[1]) : null;
+            latestPlanTypeByStudentId.put(studentId, planType);
+        }
+
+        return latestPlanTypeByStudentId;
     }
 
     private PageResponse.Meta toMeta(Page<?> page) {
