@@ -34,6 +34,10 @@ public interface OrderRepository extends JpaRepository<Order, String>, JpaSpecif
   @EntityGraph(attributePaths = { "student", "discount", "subscription" })
   Page<Order> findAll(Specification<Order> spec, Pageable pageable);
 
+  @Override
+  @EntityGraph(attributePaths = { "student", "discount", "subscription" })
+  Optional<Order> findById(String id);
+
   @Query("select o.planType from Order o where o.student.id = :studentId order by o.date desc")
   List<PlanType> findPlanTypesByStudentIdOrderByDateDesc(@Param("studentId") String studentId, Pageable pageable);
 

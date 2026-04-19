@@ -18,6 +18,7 @@ import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface SubscriptionRepository
@@ -33,6 +34,10 @@ public interface SubscriptionRepository
   @Override
   @EntityGraph(attributePaths = { "order", "order.student" })
   Page<Subscription> findAll(Specification<Subscription> spec, Pageable pageable);
+
+  @Override
+  @EntityGraph(attributePaths = { "order", "order.student" })
+  Optional<Subscription> findById(String id);
 
   @Query("SELECT COUNT(s) FROM Subscription s WHERE YEAR(s.startDate) = :year AND MONTH(s.startDate) = :month")
   long countByYearAndMonth(@Param("year") int year, @Param("month") int month);

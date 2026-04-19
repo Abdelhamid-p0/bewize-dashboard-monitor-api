@@ -41,6 +41,12 @@ public class SubscriptionController {
         return ResponseEntity.ok(page);
     }
 
+    @Operation(summary = "Get subscription details")
+    @GetMapping("/{id}")
+    public ResponseEntity<SubscriptionListDto> getSubscriptionById(@PathVariable String id) {
+        return ResponseEntity.ok(subscriptionService.getSubscriptionById(id));
+    }
+
     @Operation(summary = "Create subscription")
     @PostMapping
     public ResponseEntity<SubscriptionListDto> create(@RequestBody SubscriptionCreateRequest req) {

@@ -1,6 +1,7 @@
 package com.bewize.monitorbackend.service;
 
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.UUID;
 
@@ -73,6 +74,13 @@ public class SubscriptionService {
                 page.getTotalPages());
 
         return new PageResponse<>(data, meta);
+    }
+
+    @Transactional(readOnly = true)
+    public SubscriptionListDto getSubscriptionById(String id) {
+        Subscription subscription = subscriptionRepository.findById(id)
+                .orElseThrow(() -> new NoSuchElementException("Subscription not found"));
+        return subscriptionMapper.toListDto(subscription);
     }
 
     @Transactional
