@@ -106,7 +106,8 @@ public class DataTableService {
                 spec = spec.and((root, query, cb) -> {
                     var latestOrderDateSubquery = query.subquery(LocalDateTime.class);
                     var latestOrderDateRoot = latestOrderDateSubquery.from(Order.class);
-                    latestOrderDateSubquery.select(cb.greatest(latestOrderDateRoot.get("date")));
+                    latestOrderDateSubquery
+                            .select(cb.greatest(latestOrderDateRoot.get("date").as(LocalDateTime.class)));
                     latestOrderDateSubquery.where(cb.equal(latestOrderDateRoot.get("student"), root));
 
                     var latestOrderPlanSubquery = query.subquery(Integer.class);
@@ -128,10 +129,10 @@ public class DataTableService {
         Page<Student> page = studentRepository.findAll(spec, pageable);
 
         Map<String, String> latestPlanTypeByStudentId = loadLatestPlanTypeByStudentIds(
-            page.getContent().stream()
-                .map(Student::getId)
-                .filter(Objects::nonNull)
-                .toList());
+                page.getContent().stream()
+                        .map(Student::getId)
+                        .filter(Objects::nonNull)
+                        .toList());
 
         List<Map<String, Object>> data = page.getContent().stream().map(student -> {
             Map<String, Object> row = new HashMap<>();
